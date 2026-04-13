@@ -1,19 +1,20 @@
 name: Keepalive Workflow
 on:
   schedule:
-    - cron: "0 0 * * 0" # 每周日午夜自动执行，维持心跳
+    - cron: "0 0 * * 0" # 每周日午夜自动执行
   workflow_dispatch:
 
 jobs:
   prevent-cron-suspension:
     name: Prevent Cron Suspension
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # 显式声明容器级写入协议，覆盖平台默认路由权限
     steps:
-      - uses: actions/checkout@v3
-      - name: Keepalive Action
-        uses: gautamkrishnar/keepalive-workflow@v2
-        with:
-          # 制造机器提交记录，欺骗 GitHub 活跃度检测
-          commit_message: "chore: auto-keepalive to reset 60-day cron suspension"
-          committer_username: "github-actions[bot]"
-          committer_email: "github-actions[bot]@users.noreply.github.com"
+      - uses: actions/checkout@v4 # 升级为 v4 规避节点环境衰减失效
+      - name: Native Keepalive Commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: auto-keepalive via native git"
+          git push
